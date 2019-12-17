@@ -1,5 +1,8 @@
+/**
+ * 数据代理类
+ */
 export class ConstructProxy {
-    constructor () {
+    constructor() {
         this.arrayProto = Array.prototype
     }
     /**
@@ -80,30 +83,24 @@ export class ConstructProxy {
     static proxyObject(obj, vm, namespace) {
         let proxyObj = {}
         for (const key in obj) {
-            if (obj.hasOwnProperty(key)) {
-                Object.defineProperty(proxyObj, key, {
-                    configurable: true,
-                    get() {
-                        return obj[key]
-                    },
-                    set: (value) => {
-                        obj[key] = value
-                    }
-                })
-                // 代理到vm上 让Rue对象可以直接调用
-                Object.defineProperty(vm, key, {
-                    configurable: true,
-                    get() {
-                        return vm[key]
-                    },
-                    set: (value) => {
-                        vm[key] = value
-                    }
-                })
-                // 如果对象的属性是对象，递归深层代理
-                if (obj[key] instanceof Object) {
-                    proxyObj[key] = this.proxy(vm, obj[key], this.getNameSpace(namespace, key))
+            Object.defineProperty(proxyObj, key, {
+                configurable: true,
+                get: () => obj[key],
+                set: (value) => {
+                    obj[key] = value
                 }
+            })
+            // 代理到vm上 让Rue对象可以直接调用
+            Object.defineProperty(vm, key, {
+                configurable: true,
+                get: () => obj[key],
+                set: (value) => {
+                    vm[key] = value
+                }
+            })
+            // 如果对象的属性是对象，递归深层代理
+            if (obj[key] instanceof Object) {
+                proxyObj[key] = this.proxy(vm, obj[key], this.getNameSpace(namespace, key))
             }
         }
         return proxyObj
@@ -114,9 +111,9 @@ export class ConstructProxy {
      * @param nowProp 当前要修改的属性
      */
     static getNameSpace(nowNamespce, nowProp) {
-        if (nowNamespce == '') {
+        if (!nowNamespce) {
             return nowProp
-        } else if (nowProp == '') {
+        } else if (!nowProp) {
             return nowNamespce
         } else {
             return nowNamespce + '.' + nowProp
