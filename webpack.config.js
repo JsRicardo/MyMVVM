@@ -1,11 +1,13 @@
 const path = require('path')
 const HTMLP = require('html-webpack-plugin')
-const { CleanWebpackPlugin } = require('clean-webpack-plugin')
+const {
+    CleanWebpackPlugin
+} = require('clean-webpack-plugin')
 
 module.exports = {
-    entry: './src/index.ts',
+    entry: './src/index.js',
     output: {
-        path: path.resolve('./dist'), // 配置打包文件
+        path: path.resolve(__dirname, './dist'), // 配置打包文件
         filename: 'script/bundle.js'
     },
     plugins: [
@@ -16,11 +18,15 @@ module.exports = {
     ],
     module: {
         rules: [{
-            test: /.ts$/,
-            loader: 'ts-loader'
+            test: /(\.jsx|\.js)$/,
+            use: {
+                loader: "babel-loader",
+            },
+            exclude: path.resolve(__dirname, "node_modules"),
+            include: path.resolve(__dirname, "src")
         }]
     },
     resolve: {
-        extensions: ['.ts', '.js']
+        extensions: ['.js']
     }
 }
