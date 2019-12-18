@@ -33,7 +33,8 @@ module.exports = {
     module: {
         rules: [{
             test: /\.js$/,
-            use: ['babel-loader', 'eslint-loader'],
+            // use: ['babel-loader', 'eslint-loader'],
+            loader: 'babel-loader',
             include: [path.resolve(__dirname, 'src')], // 指定检查的目录
         }]
     },

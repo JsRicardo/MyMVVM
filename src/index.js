@@ -9,8 +9,7 @@ window.tt = new Rue({
             x: 1,
             y: 2
         },
-        list: [
-            {
+        list: [{
                 name: 'haha',
                 age: 12
             },

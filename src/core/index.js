@@ -1,3 +1,3 @@
-import { Rue } from './instance/index.js'
+import { Rue } from './instance/Rue.js'
 
 export default Rue

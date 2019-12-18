@@ -1,4 +1,4 @@
-export class Render {
+export class RenderTool {
     static vnode2Template = new Map()
     static template2VNode = new Map()
     /**
@@ -44,7 +44,7 @@ export class Render {
     static setTemplate2VNode(template, vnode) {
         const tempText = this.getTemplateText(template)
         const vnodeMap = this.template2VNode.get(tempText)
-        
+
         if (vnodeMap !== undefined) {
             // 如果这个模版字符串已经建立了映射，说明这个模板字符串在多个地方使用
             vnodeMap.push(vnode)
@@ -73,6 +73,35 @@ export class Render {
 
     static getTemplateText(template) {
         // 截掉模板字符串的花括号
-        return template.substring(2, template.length - 2) 
+        return template.substring(2, template.length - 2)
+    }
+    /**
+     * 获取模板字符串在data或者env中的值
+     * @param {*} objs [data, vnode.env]
+     * @param {*} target 目标值
+     */
+    static getTemplateValue(objs, target) {
+        for (let i = 0, len = objs.length; i < len; i++) {
+            let temp = this.getObjValue(objs[i], target)
+            if (temp) {
+                return temp
+            }
+        }
+        return null
+    }
+
+    static getObjValue(obj, target) { // data.content
+        if(!obj) return
+        let nameList = target.split('.')
+        let temp = obj
+        // 对对象自顶向下寻找
+        for(let i = 0, len = nameList.length; i < len; i++){
+            if (temp[nameList[i]]) {
+                temp = temp[nameList[i]]
+            } else {
+                return undefined
+            }
+        }
+        return temp
     }
 }

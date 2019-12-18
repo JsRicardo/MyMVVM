@@ -1,5 +1,5 @@
-import { VNode } from './vnode'
-import { Render } from '../render'
+import { VNode } from './VNode'
+import { RenderTool } from '../render/RenderTool'
 export class Mount {
     /**
      * 允许不传el，创建完Rue之后，进行手动挂载
@@ -20,7 +20,7 @@ export class Mount {
         // 挂载节点
         vm._vnode = this.constructVNode(vm, ele, null)
         // 进行预备渲染 建立渲染索引 模板和vnode的双向索引
-        Render.prepareRender(vm, vm._vnode)
+        RenderTool.prepareRender(vm, vm._vnode)
     }
     /**
      * 构建虚拟节点树
