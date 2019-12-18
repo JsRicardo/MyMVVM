@@ -2,9 +2,7 @@
  * 数据代理类
  */
 export class ConstructProxy {
-    constructor() {
-        this.arrayProto = Array.prototype
-    }
+    static arrayProto = Array.prototype
     /**
      * 代理方法
      * @param vm Rue对象
@@ -17,10 +15,12 @@ export class ConstructProxy {
             const len = obj.length
             proxyObj = new Array(len)
             for (let i = 0; i < len; i++) {
+                // 数组的每一项都需要代理 递归
                 proxyObj[i] = this.proxy(vm, obj[i], namespace)
             }
+            // 代理这整个数组
             proxyObj = this.proxyArray(obj, vm, namespace)
-        } else if (obj instanceof Object) {
+        } else if (obj instanceof Object) { // 判断这个对象是不是对象
             proxyObj = this.proxyObject(obj, vm, namespace)
         } else {
             throw new Error('error: 错误的类型---' + obj + ', 应为对象或者数组')
@@ -34,6 +34,7 @@ export class ConstructProxy {
      * @param namespace 命名空间
      */
     static proxyArray(arr, vm, namespace) {
+        // 将数组当做一个 k-v结构来进行代理
         let proxyObject = {
             eleType: 'Array',
             toString: () => {
@@ -62,10 +63,11 @@ export class ConstructProxy {
      * @param namespace 命名空间 
      * @param vm Rue对象
      */
-    static proxyArrayFunc(obj, func, namespace, vm) {
+    static proxyArrayFunc(obj, func) {
         Object.defineProperty(obj, func, {
             enumerable: true,
             configurable: true,
+            // 方法其实也是k-v结构  push: function()
             value: (...args) => {
                 let original = this.arrayProto[func]
                 const result = original.apply(this, args)
