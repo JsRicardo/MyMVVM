@@ -27,7 +27,6 @@ export class RenderTool {
     static analysisTemplateString(vnode) {
         const reg = /{{[a-zA-Z0-9_.]+}}/g
         const temStrList = vnode.text.match(reg)
-
         if (temStrList) { // 有可能不存在template
             for (let i = 0, len = temStrList.length; i < len; i++) {
                 this.setTemplate2VNode(temStrList[i], vnode)
@@ -91,11 +90,11 @@ export class RenderTool {
     }
 
     static getObjValue(obj, target) { // data.content
-        if(!obj) return
+        if (!obj) return
         let nameList = target.split('.')
         let temp = obj
         // 对对象自顶向下寻找
-        for(let i = 0, len = nameList.length; i < len; i++){
+        for (let i = 0, len = nameList.length; i < len; i++) {
             if (temp[nameList[i]]) {
                 temp = temp[nameList[i]]
             } else {

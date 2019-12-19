@@ -1,3 +1,5 @@
+import { Render } from "../render/Render"
+
 /**
  * 数据代理类
  */
@@ -63,7 +65,7 @@ export class ConstructProxy {
      * @param namespace 命名空间 
      * @param vm Rue对象
      */
-    static proxyArrayFunc(obj, func) {
+    static proxyArrayFunc(obj, func, namespace, vm) {
         Object.defineProperty(obj, func, {
             enumerable: true,
             configurable: true,
@@ -71,6 +73,8 @@ export class ConstructProxy {
             value: (...args) => {
                 let original = this.arrayProto[func]
                 const result = original.apply(this, args)
+                // 数组调用了方法也需要重新渲染
+                Render.dataRender(vm, this.getNameSpace(namespace, ''))
                 return result
             }
         })
@@ -90,6 +94,8 @@ export class ConstructProxy {
                 get: () => obj[key],
                 set: (value) => {
                     obj[key] = value
+                    // 数据修改之后 重新渲染节点
+                    Render.dataRender(vm, this.getNameSpace(namespace, key))
                 }
             })
             // 代理到vm上 让Rue对象可以直接调用
@@ -97,7 +103,9 @@ export class ConstructProxy {
                 configurable: true,
                 get: () => obj[key],
                 set: (value) => {
-                    vm[key] = value
+                    obj[key] = value
+                    // 数据修改之后 重新渲染节点
+                    Render.dataRender(vm, this.getNameSpace(namespace, key))
                 }
             })
             // 如果对象的属性是对象，递归深层代理

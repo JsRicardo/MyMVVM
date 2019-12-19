@@ -1,5 +1,6 @@
 import { VNode } from './VNode'
 import { RenderTool } from '../render/RenderTool'
+
 export class Mount {
     /**
      * 允许不传el，创建完Rue之后，进行手动挂载
@@ -39,12 +40,12 @@ export class Mount {
         vnode = new VNode(tag, ele, children, text, data, parent, nodeType)
 
         let childs = vnode.ele.childNodes
-      
+
         // 深度优先遍历 创建子节点
-        for(let i = 0, len = childs.length; i < len; i++){
+        for (let i = 0, len = childs.length; i < len; i++) {
             let childNodes = this.constructVNode(vm, childs[i], vnode)
 
-            if(childNodes instanceof VNode) {
+            if (childNodes instanceof VNode) {
                 // 返回单一节点时
                 vnode.children.push(childNodes)
             } else {

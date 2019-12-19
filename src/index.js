@@ -4,10 +4,9 @@ window.tt = new Rue({
     el: 'app',
     data: {
         content: 'ricardo',
-        desc: '很帅',
-        dec: {
-            x: 1,
-            y: 2
+        desc: {
+            x: '帅',
+            y: '很帅'
         },
         list: [{
                 name: 'haha',
