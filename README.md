@@ -50,6 +50,8 @@ new Rue({
         ├─instance // Rue父类，创建方法
         ├─proxy // 代理数据
         ├─render // 渲染方法
+        ├─grammar // 自定义语法
+        ├─util // 工具类
         ├─vdom // 生成虚拟节点树
         └─index.js // 导出Rue类
     └─index.js // 主文件
@@ -375,4 +377,152 @@ export class Render {
 
 ### 五、修改数据之后，自动渲染
 
-To Be Continue...
+想要修改数据之后，页面能够跟着自动渲染，数据和页面必然要联系起来，而且要能监听数据的改变，这也是为什么前面要将模板和数据做双向映射，并且要代理数据的原因。
+
+OK，现在有了代理之后的数据，也有了```template2VNode```这个映射，修改数据之后，自动渲染就只需要在调用对象的```set```方法时，找到修改的属性对应的虚拟节点，更新虚拟节点的值就可以了。
+
+先在Render类中添加一个template寻找vnode的方法
+```js
+export class Render {
+    /**
+     * 渲染节点
+     * @param {*} vm Rue对象
+     * @param {*} vnode 虚拟节点树
+     */
+    static renderNode(vm, vnode) {}
+    /**
+     * 根据数据渲染节点
+     * @param {*} vm rue对象
+     * @param {*} data 要渲染的数据
+     */
+    static dataRender(vm, data) {
+        // 根据映射  找到使用这个模板的所有虚拟节点
+        const vnodes = RenderTool.template2VNode.get(data)
+        if (vnodes !== undefined) {
+            for (let i = 0, len = vnodes.length; i < len; i++) {
+                // 渲染
+                this.renderNode(vm, vnodes[i])
+            }
+        }
+    }
+}
+```
+有了这个方法之后只需要在代理对象的set方法里面轻轻的调用```Render.dataRender```即可实现改变数据，刷新页面数据。
+
+![实时刷新数据](https://wx2.sinaimg.cn/mw690/005QwFx4gy1ga20549asoj30lh0b2t8s.jpg)
+
+## 标签上属性解析
+
+标签上的属性就是诸如 v-model v-for v-bind... 之类的东西，那么他们应该在哪里处理呢？
+
+之前有Mount类里面有一个方法```constructVNode```，在这里，处理了虚拟节点树的构建，这里也能拿到原生的dom节点，所以我决定在这里处理节点上面的属性
+
+- 在Mount类中新增一个静态方法 ```analysisAttr```，用以分析节点上面的属性，在```constructVNode```第一行调用这个方法。
+
+```js
+    /**
+     * 构建虚拟节点树
+     * @param {*} vm 
+     * @param {*} ele dom节点
+     * @param {*} parent 父节点
+     */
+    static constructVNode(vm, ele, parent) {
+        this.analysisAttr(vm, ele, parent) // 挂载之前就需要分析标签上面的属性
+        // 创建节点
+        // 深度优先遍历 创建子节点
+    }
+    /**
+     * 分析标签节点的属性 v-model v-for...
+     * @param {*} vm Rue对象
+     * @param {*} ele 节点
+     * @param {*} parant 父节点
+     */
+    static analysisAttr(vm, ele, parant) {
+        if (ele.nodeType === 1) {
+            // 标签节点才需要进行属性分析
+            let attrs = ele.getAttributeNames();
+            if (attrs.indexOf('v-model') !== -1) {
+                // 如果有v-model就执行vmodel双向数据绑定
+                Grammar.vmodel(vm, ele, ele.getAttribute('v-model'))
+            }
+        }
+    }
+```
+OK, ```analysisAttr```就是用来处理节点上面的自定义指令的方法（自定义方法称为grammar，放在grammar文件夹下）
+
+接下来，就需要一个Grammar类用来处理自定义指令方法，那就新建一个Gramma类。
+
+### v-model
+
+v-model在vue中就是用来实现双向数据绑定的一个指令。他要做的事情就是将可改变值的元素和data中的某一个值进行绑定，改变其中一个，另一个也跟着改变。
+
+有了之前数据渲染了方法，已经处理了首次数据渲染，数据改变渲染节点，这里就只需要处理文本输入时，改变数据了。
+
+那么方法就是：在触发元素的onchange事件时，动态改变元素和data中的值。
+
+这里为了方便新建一个util文件夹，导出一个Tool工具类，用于设置对象的值，还有获取对象的值。简单的递归就行。
+
+```js
+export class Tool{
+    /**
+     * 获取对象的某个值
+     * @param {*} obj 对象
+     * @param {*} target 想要获取的目标属性 data.content
+     */
+    static getObjValue(obj, target) {}
+    /**
+     * 设置对象的某个值
+     * @param {*} obj 对象
+     * @param {*} target 想要设置的目标属性 data.content
+     * @param {*} value 设置的值
+     */
+    static setObjValue(obj, target, value) {}
+}
+```
+实现Grammar类
+
+```js
+/**
+ * 规定语法类
+ */
+export class Grammar{
+    /**
+     * v-model双向数据绑定
+     * @param {*} vm 
+     * @param {*} ele 
+     * @param {*} data 
+     */
+    static vmodel (vm, ele, data) {
+        // 设置元素的初始值
+        ele.value = Tool.getObjValue(vm, data)
+        ele.onchange = e => {
+            // 元素值改变之后需要进行双向改变
+            Tool.setObjValue(vm._data, data, ele.value)
+        }
+    }
+}
+```
+
+OK，改造一下模板网页
+
+```html
+<div id='app'>
+    <div>{{content}}, {{desc.x}}</div>
+    <div>{{desc.y}}</div>
+    <span>粉丝：{{fans}}</span>
+    <hr>
+    <input type="text" v-model='fans' />
+</div>
+```
+
+接下来就是见证奇迹的时刻！
+
+首次渲染成功！
+![首次渲染](https://wx2.sinaimg.cn/mw690/005QwFx4gy1ga25hexy6tj30gb09n0sp.jpg)
+
+input框中输入数据，双向绑定成功！
+![双向绑定](https://wx4.sinaimg.cn/mw690/005QwFx4gy1ga25hf0invj30e20ardfq.jpg)
+
+### v-bind
+
+TO BE CONTIBUE

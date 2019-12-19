@@ -8,6 +8,7 @@ window.tt = new Rue({
             x: '帅',
             y: '很帅'
         },
+        fans: 'many',
         list: [{
                 name: 'haha',
                 age: 12
