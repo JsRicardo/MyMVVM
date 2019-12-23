@@ -1,4 +1,7 @@
-import { Tool } from "../util/Tool"
+import {
+    Tool
+} from "../util/Tool"
+import { Grammar } from '../grammar/Grammar'
 
 export class RenderTool {
     static vnode2Template = new Map()
@@ -15,6 +18,7 @@ export class RenderTool {
             this.analysisTemplateString(vnode)
         }
         if (vnode.nodeType === 1) {
+            this.analysisAttr(vm, vnode)
             // 标签节点，检查子节点
             for (let i = 0, len = vnode.children.length; i < len; i++) {
                 // 遍历根节点
@@ -74,7 +78,13 @@ export class RenderTool {
 
     static getTemplateText(template) {
         // 截掉模板字符串的花括号
-        return template.substring(2, template.length - 2)
+        if (template.startWith('{{') && template.endWith('}}')) {
+            // 模板语法的
+            return template.substring(2, template.length - 2)
+        } else {
+            // v-model v-bind等的
+            return template
+        }
     }
     /**
      * 获取模板字符串在data或者env中的值
@@ -89,5 +99,19 @@ export class RenderTool {
             }
         }
         return null
+    }
+    /**
+     * 分析标签属性，建立映射，方便数据双向绑定
+     * @param {*} vm 
+     * @param {*} vnode 
+     */
+    static analysisAttr(vm, vnode) {
+        let attrNames = vnode.ele.getAttributeNames()
+        if (attrNames.indexOf('v-model') > -1) {
+            const vModel = vnode.ele.getAttribute('v-model')
+            this.setTemplate2VNode(vModel, vnode)
+            this.setVNode2Template(vModel, vnode)
+            Grammar.vmodel(vm, vnode.ele, vModel)
+        }
     }
 }

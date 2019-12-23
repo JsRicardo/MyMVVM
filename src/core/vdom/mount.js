@@ -4,7 +4,6 @@ import {
 import {
     RenderTool
 } from '../render/RenderTool'
-import { Grammar } from '../grammar/Grammar'
 
 export class Mount {
     /**
@@ -35,7 +34,6 @@ export class Mount {
      * @param {*} parent 父节点
      */
     static constructVNode(vm, ele, parent) {
-        this.analysisAttr(vm, ele, parent) // 挂载之前就需要分析标签上面的属性
         
         let vnode
         let children = []
@@ -71,21 +69,5 @@ export class Mount {
             return ele.nodeValue
         }
         return ''
-    }
-    /**
-     * 分析标签节点的属性 v-model v-for...
-     * @param {*} vm Rue对象
-     * @param {*} ele 节点
-     * @param {*} parant 父节点
-     */
-    static analysisAttr(vm, ele, parant) {
-        if (ele.nodeType === 1) {
-            // 标签节点才需要进行属性分析
-            let attrs = ele.getAttributeNames();
-            if (attrs.indexOf('v-model') !== -1) {
-                // 如果有v-model就执行vmodel双向数据绑定
-                Grammar.vmodel(vm, ele, ele.getAttribute('v-model'))
-            }
-        }
     }
 }

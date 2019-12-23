@@ -12,10 +12,13 @@ export class Grammar{
      */
     static vmodel (vm, ele, data) {
         // 设置元素的初始值
-        ele.value = Tool.getObjValue(vm, data)
+        // ele.value = Tool.getObjValue(vm, data)
         ele.onchange = e => {
             // 元素值改变之后需要进行双向改变
             Tool.setObjValue(vm._data, data, ele.value)
         }
+    }
+    static vFor (vm, ele, data) {
+
     }
 }

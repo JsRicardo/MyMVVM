@@ -1,6 +1,7 @@
 import { ConstructProxy } from '../proxy/ConstructProxy'
 import { Mount } from '../vdom/Mount.js'
 import { Render } from '../render/Render'
+import { Tool } from '../util/Tool'
 
 // mvvm框架初始化方法
 export class InitMixin {
@@ -9,6 +10,7 @@ export class InitMixin {
         this._isRue = true
         this._data = null
         this._vnode = null
+        Tool.mixinString()
     }
 
     _init(options) {

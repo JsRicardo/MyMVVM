@@ -1,4 +1,4 @@
-export class Tool{
+export class Tool {
     /**
      * 获取对象的某个值
      * @param {*} obj 对象
@@ -28,7 +28,7 @@ export class Tool{
         if (!obj) return
         let nameList = target.split('.')
         let temp = obj
-         // 对对象自顶向下寻找,需要找到目标属性的上一层属性，所以需要 -1
+        // 对对象自顶向下寻找,需要找到目标属性的上一层属性，所以需要 -1
         for (let i = 0, len = nameList.length - 1; i < len; i++) {
             if (temp[nameList[i]]) {
                 temp = temp[nameList[i]]
@@ -36,8 +36,28 @@ export class Tool{
                 return
             }
         }
-        if (temp[nameList[nameList.length - 1]]){
+        if (temp[nameList[nameList.length - 1]]) {
             temp[nameList[nameList.length - 1]] = value
         }
+    }
+    static mixinString () {
+        return (function () {
+            String.prototype.startWith = function (str) {
+                if (str == null || str == "" || this.length == 0 || str.length > this.length)
+                    return false;
+                if (this.substr(0, str.length) == str)
+                    return true;
+                else
+                    return false;
+            }
+            String.prototype.endWith = function (str) {
+                if (str == null || str == "" || this.length == 0 || str.length > this.length)
+                    return false;
+                if (this.substring(this.length - str.length) == str)
+                    return true;
+                else
+                    return false;
+            }
+        })()
     }
 }

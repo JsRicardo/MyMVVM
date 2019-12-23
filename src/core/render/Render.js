@@ -1,4 +1,6 @@
-import { RenderTool } from "./RenderTool"
+import {
+    RenderTool
+} from "./RenderTool"
 
 export class Render {
     /**
@@ -23,6 +25,17 @@ export class Render {
                     }
                 }
                 vnode.ele.nodeValue = result
+            }
+        } else if (vnode.nodeType === 1 && vnode.tag === 'INPUT') {
+            // 双向数据绑定
+            const templates = RenderTool.vnode2Template.get(vnode)
+            if (templates) {
+                for (let i = 0, len = templates.length; i < len; i++){
+                    const templateValue = RenderTool.getTemplateValue([vm._data, vm.env], templates[i])
+                    if (templateValue){
+                        vnode.ele.value = templateValue
+                    }
+                }
             }
         } else {
             // 如果不是文本节点就遍历子节点
