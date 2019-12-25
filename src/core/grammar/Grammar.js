@@ -19,6 +19,6 @@ export class Grammar{
         }
     }
     static vFor (vm, ele, data) {
-
+       
     }
 }

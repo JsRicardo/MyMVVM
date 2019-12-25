@@ -10,12 +10,12 @@ window.tt = new Rue({
         },
         fans: 'many',
         list: [{
-                name: 'haha',
-                age: 12
+                name: '迪丽热巴',
+                time: 10
             },
             {
-                name: 'ee',
-                age: 13
+                name: '杨幂',
+                time: 13
             }
         ]
     }

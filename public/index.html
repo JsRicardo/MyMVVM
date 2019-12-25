@@ -13,6 +13,9 @@
         <span>粉丝：{{fans}}</span>
         <hr>
         <input type="text" v-model='fans' />
+        <ul>
+            <li v-for='(item, index) in list'>姓名：{{item.name}} - 粉龄：{{item.time}}</li>
+        </ul>
     </div>
 </body>
 </html>

@@ -1,7 +1,9 @@
 import {
     Tool
 } from "../util/Tool"
-import { Grammar } from '../grammar/Grammar'
+import {
+    Grammar
+} from '../grammar/Grammar'
 
 export class RenderTool {
     static vnode2Template = new Map()
@@ -75,7 +77,10 @@ export class RenderTool {
             this.vnode2Template.set(vnode, [tempText])
         }
     }
-
+    /**
+     * 解掉模板
+     * @param {*} template 
+     */
     static getTemplateText(template) {
         // 截掉模板字符串的花括号
         if (template.startWith('{{') && template.endWith('}}')) {
@@ -107,7 +112,7 @@ export class RenderTool {
      */
     static analysisAttr(vm, vnode) {
         let attrNames = vnode.ele.getAttributeNames()
-        if (attrNames.indexOf('v-model') > -1) {
+        if (attrNames.indexOf('v-model') !== -1) {
             const vModel = vnode.ele.getAttribute('v-model')
             this.setTemplate2VNode(vModel, vnode)
             this.setVNode2Template(vModel, vnode)

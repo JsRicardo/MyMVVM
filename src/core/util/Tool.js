@@ -40,6 +40,15 @@ export class Tool {
             temp[nameList[nameList.length - 1]] = value
         }
     }
+    static deepClone(obj){
+        if (obj instanceof Array) {
+
+        } else if (obj instanceof Object) {
+            
+        } else {
+            return obj
+        }
+    }
     static mixinString () {
         return (function () {
             String.prototype.startWith = function (str) {

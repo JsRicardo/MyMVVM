@@ -523,6 +523,31 @@ OK，改造一下模板网页
 input框中输入数据，双向绑定成功！
 ![双向绑定](https://wx4.sinaimg.cn/mw690/005QwFx4gy1ga25hf0invj30e20ardfq.jpg)
 
-### v-bind
+### v-for
+
+先来看一段模板代码
+```html
+<ul>
+    <li v-for='(item, index) in list'>姓名：{{item.name}} - 粉龄：{{item.time}}</li>
+</ul>
+```
+这是一段简单的vue模式循环生成dom节点的模板语法，那么需要考虑的是，这个模板节点肯定不是一个真实的节点！而是我们需要根据这个模板和`list`数组去生成真实的节点。
+
+引入红黑树的概念：
+- 假设list的长度为3
+- 需要根据模板`li`生成三个真实的`li`元素
+
+如图：
+![节点红黑树](https://wx4.sinaimg.cn/mw690/005QwFx4gy1ga8z6fpunvj30fs0aldg1.jpg)
+
+但是在生成虚拟节点树的时候，又需要将`虚拟模板li`挂载在`ul`下，`真实节点li`则挂载在`模板li`下，这样的话，当`list`有修改时，就可以根据`模板li`重新生成`真实节点li`。
+
+vue的作者则是把虚拟节点li合并到了ul中。
+
+
+
+
+
+
 
 TO BE CONTIBUE
