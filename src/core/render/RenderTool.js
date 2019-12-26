@@ -19,9 +19,13 @@ export class RenderTool {
             // 文本节点 分析文本节点的内容，是否有模板字符串 {{}}
             this.analysisTemplateString(vnode)
         }
-        if (vnode.nodeType === 1) {
-            this.analysisAttr(vm, vnode)
-            // 标签节点，检查子节点
+        if (vnode.nodeType === 0) {
+            this.setTemplate2VNode(`{{${ vnode.data }}}`, vnode)
+            this.setVNode2Template(`{{${ vnode.data }}}`, vnode)
+        }
+        this.analysisAttr(vm, vnode)
+        // 标签节点或者自定义虚拟模板节点，检查子节点
+        if ([1, 0].includes(vnode.nodeType)) {
             for (let i = 0, len = vnode.children.length; i < len; i++) {
                 // 遍历根节点
                 this.prepareRender(vm, vnode.children[i])
@@ -111,6 +115,7 @@ export class RenderTool {
      * @param {*} vnode 
      */
     static analysisAttr(vm, vnode) {
+        if (vnode.nodeType !== 1) return
         let attrNames = vnode.ele.getAttributeNames()
         if (attrNames.indexOf('v-model') !== -1) {
             const vModel = vnode.ele.getAttribute('v-model')

@@ -40,15 +40,53 @@ export class Tool {
             temp[nameList[nameList.length - 1]] = value
         }
     }
-    static deepClone(obj){
-        if (obj instanceof Array) {
-
-        } else if (obj instanceof Object) {
-            
+    /**
+     * 深克隆，经过代理的对象不能用JSON来进行深克隆
+     * @param {*} object 需要克隆的对象
+     */
+    static deepClone(object){
+        if (object instanceof Array) {
+            const cloneArr = new Array(object.length)
+            object.forEach((item,index) => {
+                cloneArr[index] = this.deepClone(item)
+            })
+            return cloneArr
+        } else if (object instanceof Object) {
+            const cloneObj = {}
+            const keys = Object.getOwnPropertyNames(object)
+            keys.forEach(key => {
+                cloneObj[key] = this.deepClone(object[key])
+            })
+            return cloneObj
         } else {
-            return obj
+            return object
         }
     }
+    /**
+     * 合并对象
+     * @param {*} obj1 
+     * @param {*} obj2 
+     */
+    static mergeObject(obj1, obj2) {
+        if (Object.keys(obj1).length === 0) return this.deepClone(obj2)
+        if (Object.keys(obj2).length === 0) return this.deepClone(obj1)
+        const result = {}
+
+        const obj1Attrs = Object.getOwnPropertyNames(obj1)
+        obj1Attrs.forEach(item => {
+            result[item] = obj1[item]
+        })
+
+        const obj2Attrs = Object.getOwnPropertyNames(obj2)
+        obj2Attrs.forEach(item => {
+            result[item] = obj2[item]
+        })
+
+        return result
+    }
+    /**
+     * 给String原型上添加starWith和endWith方法
+     */
     static mixinString () {
         return (function () {
             String.prototype.startWith = function (str) {

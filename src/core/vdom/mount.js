@@ -7,6 +7,9 @@ import {
 import {
     GrammarTool
 } from "../grammar/GrammarTool"
+import {
+    Tool
+} from '../util/Tool'
 
 
 export class Mount {
@@ -51,20 +54,19 @@ export class Mount {
             // 创建节点
             vnode = new VNode(tag, ele, children, text, data, parent, nodeType)
 
-            if (nodeType === 1) {
-                const env = ele.getAttribute('env')
-                if (env) {
-                    // env 是当前标签的环境变量
-                    // 如果标签是一个元素标签，并且标签上还有env这个属性，则需要解析这个属性
-                    // 合并环境变量  比如v-for 嵌套 v-for
-                    vnode.env = this.mergeEnv(vnode.env, JSON.parse(env))
-                } else {
-                    vnode.env = this.mergeEnv(vnode.env, parent ? parent.env : {});
-                }
+            if (nodeType === 1 && ele.getAttribute('env')) {
+                // env 是当前标签的环境变量
+                // 如果标签是一个元素标签，并且标签上还有env这个属性，则需要解析这个属性
+                // 合并环境变量  比如v-for 嵌套 v-for
+                vnode.env = Tool.mergeObject(vnode.env, JSON.parse(ele.getAttribute('env')))
+            } else {
+                vnode.env = Tool.mergeObject(vnode.env, parent ? parent.env : {});
             }
+
         }
 
-        let childs = vnode.ele.childNodes
+        let childs = vnode.nodeType === 0 ? vnode.parent.ele.childNodes : vnode.ele.childNodes
+
         // 深度优先遍历 创建子节点
         for (let i = 0, len = childs.length; i < len; i++) {
             let childNodes = this.constructVNode(vm, childs[i], vnode)
@@ -95,12 +97,27 @@ export class Mount {
         }
     }
     /**
-     * 合并环境变量
-     * @param {*} curEnv 
-     * @param {*} targetEnv 
+     * 节点变化后重新构建，如改变vfor数组重新生成新的节点
+     * @param {*} vm 
+     * @param {*} template 
      */
-    static mergeEnv(curEnv, targetEnv) {
-        console.log(curEnv, targetEnv)
+    static reBuild(vm, template) {
+        // 找到需要重新构建的虚拟节点（虚拟模板节点li）
+        let vNodes = RenderTool.template2VNode.get(template);
+        vNodes && vNodes.forEach(item => {
+            // 找到li的父级节点，清空子节点
+            item.parent.ele.innerHTML = ''
+            // 再把虚拟模板节点li放回去,变成最开始的模板形态
+            item.parent.ele.appendChild(item.ele)
+            // 重新构建需要改变的这一部分节点，不用全量重新构建
+            const result = this.constructVNode(vm, item.ele, item.parent)
+            item.parent.children = [result]
+            // 清空索引
+            RenderTool.template2VNode.clear()
+            RenderTool.vnode2Template.clear()
+            // 重新构建索引，不会影响dom节点
+            RenderTool.prepareRender(vm, vm._vnode)
+        })
     }
     /**
      * 获取文本节点的文本

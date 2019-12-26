@@ -16,6 +16,7 @@ export class GrammarTool {
         const strArr = this.getInstruction(vForText)
         const data = strArr[strArr.length - 1]
         const vNode = new VNode(ele.nodeName, ele, [], '', data, parent, 0)
+        vNode.instructions = vForText;
         // 生成了虚拟模板节点之后，需要删除原本的模板节点
         parent.ele.removeChild(ele)
         // 当把这个节点删除之后，dom也会顺带的删除一个文本节点，最后就剩一个文本节点
@@ -23,7 +24,7 @@ export class GrammarTool {
         parent.ele.appendChild(document.createTextNode(''))
 
         // 分析vfor指令需要做什么
-        this.analysisInstructions(vm, ele, parent, strArr)
+        const result = this.analysisInstructions(vm, ele, parent, strArr)
 
         return vNode
     }
@@ -38,7 +39,8 @@ export class GrammarTool {
         const data = instructions[instructions.length - 1] // 取出循环的数据
         let vmData = Tool.getObjValue(vm._data, data)
         if (!vmData) throw new Error(`error: ${data} is undefine`)
-       
+        
+        const result = []
         // 创建标签
         for(let i = 0, len = vmData.length; i < len; i++){
             const tempDom = document.createElement(ele.nodeName)
@@ -48,7 +50,9 @@ export class GrammarTool {
             tempDom.setAttribute('env', JSON.stringify(env))
             // 挂载到父节点下，以便后面解析dom生成vDom
             parent.ele.appendChild(tempDom)
+            result.push(tempDom)
         }
+        return result
     }
     /**
      * 解析指令语法

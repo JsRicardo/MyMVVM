@@ -1,10 +1,15 @@
-import { Render } from "../render/Render"
+import {
+    Render
+} from "../render/Render"
+import {
+    Mount
+} from "../vdom/Mount"
+
 
 /**
  * 数据代理类
  */
 export class ConstructProxy {
-    static arrayProto = Array.prototype
     /**
      * 代理方法
      * @param vm Rue对象
@@ -37,25 +42,25 @@ export class ConstructProxy {
      */
     static proxyArray(arr, vm, namespace) {
         // 将数组当做一个 k-v结构来进行代理
-        let proxyObject = {
-            eleType: 'Array',
-            toString: () => {
-                let res = ''
-                arr.forEach(it => {
-                    res += it + ', '
-                })
-                return res.substring(0, res.length - 2)
+        let obj = {
+            eleType: "Array",
+            toString: function () {
+                let result = "";
+                for (let i = 0; i < arr.length; i++) {
+                    result += arr[i] + ", "
+                }
+                return result.substring(0, result.length - 2);
             },
             push() {},
             pop() {},
             shift() {},
             unshift() {}
         }
-        this.proxyArrayFunc.call(vm, proxyObject, 'push', namespace, vm)
-        this.proxyArrayFunc.call(vm, proxyObject, 'pop', namespace, vm)
-        this.proxyArrayFunc.call(vm, proxyObject, 'shift', namespace, vm)
-        this.proxyArrayFunc.call(vm, proxyObject, 'unshift', namespace, vm)
-        arr.__proto__ = proxyObject
+        this.proxyArrayFunc.call(vm, obj, 'push', namespace, vm)
+        this.proxyArrayFunc.call(vm, obj, 'pop', namespace, vm)
+        this.proxyArrayFunc.call(vm, obj, 'shift', namespace, vm)
+        this.proxyArrayFunc.call(vm, obj, 'unshift', namespace, vm)
+        arr.__proto__ = obj
         return arr
     }
     /**
@@ -70,11 +75,11 @@ export class ConstructProxy {
             enumerable: true,
             configurable: true,
             // 方法其实也是k-v结构  push: function()
-            value: (...args) => {
-                let original = this.arrayProto[func]
-                const result = original.apply(this, args)
+            value: function(...args) {
+                const result = Array.prototype[func].apply(this, args)
+                Mount.reBuild(vm, ConstructProxy.getNameSpace(namespace, ''))
                 // 数组调用了方法也需要重新渲染
-                Render.dataRender(vm, this.getNameSpace(namespace, ''))
+                Render.dataRender(vm, ConstructProxy.getNameSpace(namespace, ''))
                 return result
             }
         })
