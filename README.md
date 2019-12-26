@@ -540,12 +540,142 @@ input框中输入数据，双向绑定成功！
 如图：
 ![节点红黑树](https://wx4.sinaimg.cn/mw690/005QwFx4gy1ga8z6fpunvj30fs0aldg1.jpg)
 
-但是在生成虚拟节点树的时候，又需要将`虚拟模板li`挂载在`ul`下，`真实节点li`则挂载在`模板li`下，这样的话，当`list`有修改时，就可以根据`模板li`重新生成`真实节点li`。
+但是在生成虚拟节点树的时候，又需要将`虚拟模板li`挂载在`ul`下，`真实节点li`则挂载在`模板li`下，这样的话，当`list`有修改时，就可以根据`模板li`重新实生成`真节点li`。
 
-vue的作者则是把虚拟节点li合并到了ul中。
+> vue的作者则是把虚拟节点li合并到了ul中。
 
+**第一次渲染v-for**
 
+在哪里做这个事情？
+思考一下，我们之前构建了VDom，在这里需要分析模板，那么是不是可以在这里分析一下标签上有`v-for`这个属性的元素，先分析，构建`虚拟模板节点LI`，根据这玩意儿生成`真实节点LI`，再去生成VDom，再渲染
 
+这里需要注意几点：
+- 分析原生节点之后需要生成虚拟模板节点，和挂载在虚拟模板节点之下的虚拟真实节点，所以需要判断有没有生成虚拟模板节点来进行创建Vnode的操作
+- 因为v-for的特殊情况，会存在环境变量这个情况，生成的新的真实节点需要挂载一个env属性用来存储环境变量
+- 又存在v-for嵌套的情况，所以需要将环境变量合并成新的环境变量，用作v-for生成的节点的变量
+- 创建了虚拟模板节点和挂载在虚拟模板节点之下的虚拟真实节点。所以需要判断自定义的`nodeType: 0`来创建虚拟节点树（比如VNode(ul) -> VNode(li temp) -> VNode(li) * 3, 对应的真实节点则是 UL -> #TEXT + LI + LI + #TEXT）
+
+OK，改造一下`constructVNode`的逻辑
+
+```js
+static constructVNode(vm, ele, parent) {
+        // 挂载前先分析可能生成新节点的属性
+        let vnode = this.analysisAttr(vm, ele, parent)
+        if (!vnode) {
+            // 如果没有需要生成新节点的标签
+            // 创建节点
+            // ...
+            if (nodeType === 1 && ele.getAttribute('env')) {
+                // env 是当前标签的环境变量
+                // 如果标签是一个元素标签，并且标签上还有env这个属性，则需要解析这个属性
+                // 合并环境变量  比如v-for 嵌套 v-for
+                vnode.env = Tool.mergeObject(vnode.env, JSON.parse(ele.getAttribute('env')))
+            } else {
+                vnode.env = Tool.mergeObject(vnode.env, parent ? parent.env : {});
+            }
+        }
+        let childs = vnode.nodeType === 0 ? vnode.parent.ele.childNodes : vnode.ele.childNodes
+        // 深度优先遍历 创建子节点
+}
+
+// 分析节点上的v-for属性，针对v-for指令，生成节点
+static analysisAttr(vm, ele, parent) {
+    // ...
+    // 处理vfor指令 返回vfor指令生成的节点
+    return Grammar.vFor(vm, ele, parent, vForText);
+}
+
+// 生成虚拟模板节点 将生成的虚拟节点挂载到虚拟模板节点之下
+// 将生成的真实节点挂载到模板节点的父节点之下
+static vFor(vm, ele, parent, vForText) {
+        // 构建虚拟模板节点li 此时形参data就应该存的是循环的list，方便后面的数据处理
+        const strArr = this.getInstruction(vForText)
+        const data = strArr[strArr.length - 1]
+        const vNode = new VNode(ele.nodeName, ele, [], '', data, parent, 0)
+        vNode.instructions = vForText;
+        // 生成了虚拟模板节点之后，需要删除原本的模板节点
+        parent.ele.removeChild(ele)
+        // 当把这个节点删除之后，dom也会顺带的删除一个文本节点，最后就剩一个文本节点
+        // 此时应新增一个无意义的文本节点
+        parent.ele.appendChild(document.createTextNode(''))
+
+        // 分析vfor指令需要做什么
+        this.analysisInstructions(vm, ele, parent, strArr)
+
+        return vNode
+    }
+// ...
+
+```
+
+**在修改了list的值的时候，应该做什么**
+
+因为做了数据劫持，所以在改变数组list的时候，我们是可以监听到这个事件的，监听到了这个事件，接下来又应该做什么呢：
+
+- 首先，数组变了，我们根据数组生成的真实节点LI肯定要跟着改变
+
+    所以要做的事情就是，重新构建改变的这一部分虚拟节点，重新走一次渲染流程
+    1. 找到这些需要重新构建的节点
+    2. 找到需要重新构建的节点的父节点，删除之前生成的子节点
+    3. 再把虚拟模板节点li放回去,变成最开始的模板形态
+    4. 重新构建需要改变的这一部分节点，不用全量重新构建
+    5. 清空索引（因为新生成的节点有变化了，之前的索引不管用了）
+    6. 重新构建索引
+
+所以就需要一个重构方法`reBuild`来做这些事情，然后在代理数组设置值的时候，调用reBuild就行。
+
+```js
+    /**
+     * 节点变化后重新构建，如改变vfor数组重新生成新的节点
+     * @param {*} vm 
+     * @param {*} template 
+     */
+    static reBuild(vm, template) {
+        // 找到需要重新构建的虚拟节点（虚拟模板节点li）
+        let vNodes = RenderTool.template2VNode.get(template);
+        vNodes && vNodes.forEach(item => {
+            // 找到li的父级节点，清空子节点
+            item.parent.ele.innerHTML = ''
+            // 再把虚拟模板节点li放回去,变成最开始的模板形态
+            item.parent.ele.appendChild(item.ele)
+            // 重新构建需要改变的这一部分节点，不用全量重新构建
+            const result = this.constructVNode(vm, item.ele, item.parent)
+            item.parent.children = [result]
+            // 清空索引
+            RenderTool.template2VNode.clear()
+            RenderTool.vnode2Template.clear()
+            // 重新构建索引，不会影响dom节点
+            RenderTool.prepareRender(vm, vm._vnode)
+        })
+    }
+```
+这样操作的话，因为索引的关系，不用去构建所有的节点，可以节约非常多的时间。
+
+初始options中添加list数组
+```js
+list: [
+    {
+        name: '迪丽热巴',
+        time: 10
+    },
+    {
+        name: '杨幂',
+        time: 13
+    }
+]
+```
+
+接下来就行见证奇迹的时刻！
+![初次渲染v-for](https://wx3.sinaimg.cn/mw690/005QwFx4gy1gaa3eayrxrj30ch0bb0sp.jpg)
+
+成功！
+
+尝试添加记录
+![修改数据](https://wx3.sinaimg.cn/mw690/005QwFx4gy1gaa3eaz37fj30n607fq33.jpg)
+
+成功！
+
+### v-bind
 
 
 

@@ -5,11 +5,11 @@ import {
     RenderTool
 } from '../render/RenderTool'
 import {
-    GrammarTool
-} from "../grammar/GrammarTool"
-import {
     Tool
 } from '../util/Tool'
+import {
+    Grammar
+} from '../grammar/Grammar'
 
 
 export class Mount {
@@ -92,7 +92,7 @@ export class Mount {
             if (attrNames.indexOf("v-for") !== -1) {
                 const vForText = ele.getAttribute('v-for')
                 // 处理vfor指令 返回vfor指令生成的节点
-                return GrammarTool.vForInit(vm, ele, parent, vForText);
+                return Grammar.vFor(vm, ele, parent, vForText)
             }
         }
     }
